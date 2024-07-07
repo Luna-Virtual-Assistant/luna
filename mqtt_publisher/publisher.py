@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, os.getenv("PUBLISHER_NAME"))
+mqtt_client = mqtt.Client(os.getenv("PUBLISHER_NAME"))
 mqtt_client.connect(host=os.getenv("HOST"), port=int(os.getenv("PORT")))
 
 def publish(text: str):

@@ -10,7 +10,7 @@ class MqttClientConnection:
         self.__mqtt_client = None
 
     def start_connection(self):
-        mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, self.__client_name)
+        mqtt_client = mqtt.Client(self.__client_name)
 
         mqtt_client.on_connect = on_connect
         mqtt_client.on_subscribe = on_subscribe
