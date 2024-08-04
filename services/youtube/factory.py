@@ -1,5 +1,5 @@
-from youtube.adapter import YoutubeVideoPlayerAdapter
-from youtube.interface import VideoPlayerInterface
+from services.youtube.adapter import YoutubeVideoPlayerAdapter
+from services.youtube.interface import VideoPlayerInterface
 
 
 class VideoPlayerFactory:
