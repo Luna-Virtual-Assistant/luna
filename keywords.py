@@ -1,10 +1,24 @@
 
 keywords = {
+    'today': [
+        'horas',
+        'hoje',
+        'agora',
+        'hora'
+    ],
+    'who': [
+        'você',
+        'criou',
+        'quem'
+    ],
     'play': [
         'toque',
-        'tocar',
         'reproduzir'
     ], 
+    'help': [
+        'ajuda',
+        'ajude'
+    ],
     'pause': [
         'pause',
         'pausar',
