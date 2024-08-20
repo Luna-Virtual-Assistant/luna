@@ -66,7 +66,7 @@ class Core():
         
     def play_video(self, video_title: str) -> None:
         self._video_player.play_video(video_title)
-        return self.__save_to_history("Reproduzindo {video_titl")
+        return self.__save_to_history(f"Reproduzindo {video_title}")
         
     def pause_video(self) -> None:
         self._keyboard_controller.pause_video()
