@@ -47,10 +47,10 @@ class Core():
     def ai_response(self, prompt: str):
         return publish(prompt, '/ai')
         
-    def today(self) -> None:
+    def today(self, _) -> None:
         print(self._assistant.today())
         
-    def who(self) -> None:
+    def who(self, _) -> None:
         print(self._assistant.who())
         
     def play_video(self, video_title: str) -> None:
