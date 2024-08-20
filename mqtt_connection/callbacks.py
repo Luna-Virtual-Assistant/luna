@@ -58,7 +58,7 @@ def on_message(client, userdata, message):
     
     message_payload = message.payload.decode()
     splitted_message_payload = message_payload.split(" ")
-    action = keyword_mapping.get(splitted_message_payload[0])        
+    action = keyword_mapping.get(splitted_message_payload[0].lower())        
     message_payload_no_action = " ".join(splitted_message_payload[1:])
     if message_payload_no_action:
         core.run(action, message_payload_no_action)

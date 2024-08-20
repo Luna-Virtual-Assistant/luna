@@ -3,6 +3,7 @@ blinker==1.8.2
 certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
+evdev==1.7.1
 Flask==3.0.3
 gTTS==2.5.1
 idna==3.6
@@ -16,14 +17,17 @@ PyAutoGUI==0.9.54
 pydub==0.25.1
 PyGetWindow==0.0.9
 PyMsgBox==1.0.9
+pynput==1.7.7
 pyperclip==1.9.0
 PyRect==0.2.0
 PyScreeze==0.1.30
 python-dotenv==1.0.1
+python-xlib==0.33
 python3-xlib==0.15
 pytweening==1.2.0
 pywhatkit==5.4
 requests==2.31.0
+six==1.16.0
 soupsieve==2.5
 urllib3==2.2.1
 Werkzeug==3.0.3
