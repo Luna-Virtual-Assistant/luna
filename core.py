@@ -33,10 +33,11 @@ class Core():
         if action in self._actions:
             self._actions[action](*args)
         else:
-            raise ValueError(f"Action {action} is not supported.")
+            msg = f"Desculpe, não entendi. Tente alguma dessas ações: 'quem', 'hoje', 'toque', 'pause', 'continue', 'próximo', 'anterior', 'aumentar volume', 'diminuir volume', 'silenciar'"
+            self.__save_to_history(msg)
+            raise ValueError(msg)
         
     def duplicated_contacts(self, data: dict) -> None:
-        print(data)
         contacts = data.get('contacts')
         speak_text = [f"{index + 1} {contact['chat_name']}," for index, contact in enumerate(contacts)]
         self._is_selecting_contact = True
@@ -46,34 +47,52 @@ class Core():
       
     def ai_response(self, prompt: str):
         return publish(prompt, '/ai')
+    
+    def __save_to_history(self, text: str) -> None:
+        publish(text=text, topic="/history")
+        return
         
     def today(self, _) -> None:
-        print(self._assistant.today())
+        response = self._assistant.today()
+        self.__save_to_history(response)
+        publish(text=response, topic="/tts")
+        return;
         
     def who(self, _) -> None:
-        print(self._assistant.who())
+        response = self._assistant.who()
+        self.__save_to_history(response)
+        publish(text=response, topic="/tts")
+        return;
         
     def play_video(self, video_title: str) -> None:
         self._video_player.play_video(video_title)
+        return self.__save_to_history("Reproduzindo {video_titl")
         
     def pause_video(self) -> None:
         self._keyboard_controller.pause_video()
+        return self.__save_to_history("Pausando mídia")
     
     def continue_video(self) -> None:
         self._keyboard_controller.continue_video()
+        return self.__save_to_history("Retomando mídia")
         
     def next_video(self) -> None:
         self._keyboard_controller.next_video()
+        return self.__save_to_history("Próximo vídeo")
         
     def previous_video(self) -> None:
         self._keyboard_controller.previous_video()
+        return self.__save_to_history("Vídeo anterior")
         
     def volume_up(self) -> None:
         self._keyboard_controller.volume_up()
+        return self.__save_to_history("Aumentando volume")
         
     def volume_down(self) -> None:
         self._keyboard_controller.volume_down()
+        return self.__save_to_history("Diminuindo volume")
         
     def mute(self) -> None:
         self._keyboard_controller.mute()
+        return self.__save_to_history("Silenciando volume")
         

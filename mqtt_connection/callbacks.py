@@ -13,13 +13,21 @@ load_dotenv(override=True)
 REQ_TOPIC = os.getenv("REQ_TOPIC")
 core = Core()
 
+DUPLICATED_CONTACT_HANDLER_TOPIC = f"{REQ_TOPIC}/duplicated"
+SELECT_CONTACT_HANDLER_TOPIC = f"{REQ_TOPIC}/select_contact"
+
+def send_message_to_contact(data: dict) -> None:
+    headers = {'Content-Type': 'application/json'}
+    requests.post(f"{os.getenv('WHATSAPP_REST_HOST')}/send-message?token={os.getenv('WHATSAPP_REST_SECRET')}", json=data, headers=headers)
+    publish("stop", "/tts/stop")
+    return;
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print(f"[{datetime.now().strftime('%Y-%m-%d - %H:%M:%S')}] {client._client_id.decode()} connected to broker sucessfully")
         client.subscribe(REQ_TOPIC)
-        client.subscribe("/luna/duplicated")
-        client.subscribe("/luna/select_contact")
+        client.subscribe(DUPLICATED_CONTACT_HANDLER_TOPIC)
+        client.subscribe(SELECT_CONTACT_HANDLER_TOPIC)
         
     else:
         print(f"Connection failed with code {rc}")
@@ -32,7 +40,7 @@ def on_message(client, userdata, message):
     print(f"[{datetime.now().strftime('%Y-%m-%d - %H:%M:%S')}] Received a message on topic {message.topic}")
     
     if core._is_selecting_contact:
-        if message.topic == "/luna/select_contact":
+        if message.topic == SELECT_CONTACT_HANDLER_TOPIC:
             message_as_string = message.payload.decode()
             message_as_number = int(message_as_string)
             selected_contact = core._contacts[message_as_number - 1]
@@ -42,14 +50,12 @@ def on_message(client, userdata, message):
                 "sessionName": selected_contact['session_name'],
                 "message": core._message_to_send
             }
-            headers = {'Content-Type': 'application/json'}
-            requests.post("http://localhost:7000/send-message?token=token", json=data, headers=headers)
-            publish("stop", "/tts/stop")
+            send_message_to_contact(data)
             core._is_selecting_contact = False
             return;
         return;
     
-    if message.topic == "/luna/duplicated":
+    if message.topic == DUPLICATED_CONTACT_HANDLER_TOPIC:
         message_as_string = message.payload.decode()
         message_as_dict = json.loads(message_as_string)
         core.run("duplicated_contacts", message_as_dict)
@@ -60,9 +66,14 @@ def on_message(client, userdata, message):
     splitted_message_payload = message_payload.split(" ")
     action = keyword_mapping.get(splitted_message_payload[0].lower())        
     message_payload_no_action = " ".join(splitted_message_payload[1:])
-    if message_payload_no_action:
-        core.run(action, message_payload_no_action)
-    else:
-        core.run(action)
+    
+    try:
+        if message_payload_no_action:
+            core.run(action, message_payload_no_action)
+        else:
+            core.run(action)
+    except ValueError as e:
+        print(f"[{datetime.now().strftime('%Y-%m-%d - %H:%M:%S')}] {e}")
+        
     print(f"[{datetime.now().strftime('%Y-%m-%d - %H:%M:%S')}] Message payload: {message.payload.decode()}")
     
