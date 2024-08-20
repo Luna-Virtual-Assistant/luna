@@ -5,6 +5,7 @@ from mqtt_publisher.publisher import publish
 import os
 from dotenv import load_dotenv
 import json
+import requests
 
 load_dotenv(override=True)
 
@@ -36,11 +37,14 @@ def on_message(client, userdata, message):
             message_as_number = int(message_as_string)
             selected_contact = core._contacts[message_as_number - 1]
             data = {
-                "contact": selected_contact,
+                "chatName": selected_contact['chat_name'],
+                "chatId": selected_contact['chat_id'],
+                "sessionName": selected_contact['session_name'],
                 "message": core._message_to_send
             }
-            stringified_data = json.dumps(data)
-            publish(stringified_data, "/whatsapp/duplicated")
+            headers = {'Content-Type': 'application/json'}
+            requests.post("http://localhost:7000/send-message?token=token", json=data, headers=headers)
+            publish("stop", "/tts/stop")
             core._is_selecting_contact = False
             return;
         return;
