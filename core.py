@@ -1,3 +1,4 @@
+import json
 from mqtt_publisher.publisher import publish
 from services.assistant.factory import AssistantFactory
 from services.keyboard.factory import KeyboardFactory
@@ -8,6 +9,7 @@ class Core():
     _is_selecting_contact = False
     _contacts = []
     _message_to_send = ""
+    _command = ""
     
     def __init__(self):
         self._name = "Core"
@@ -31,6 +33,7 @@ class Core():
         
     def run(self, action: str, *args) -> None:
         if action in self._actions:
+            self._command = ' '.join([action, *args])
             self._actions[action](*args)
         else:
             msg = f"Desculpe, não entendi. Tente alguma dessas ações: 'quem', 'hoje', 'toque', 'pause', 'continue', 'próximo', 'anterior', 'aumentar volume', 'diminuir volume', 'silenciar'"
@@ -43,13 +46,19 @@ class Core():
         self._is_selecting_contact = True
         self._contacts = contacts
         self._message_to_send = data.get('message')
+        self.__save_to_history(command=self._command, response="Contatos duplicados. Selecione um contato")
         return publish(f"Para qual contato deseja enviar? {speak_text}", '/tts')
       
     def ai_response(self, prompt: str):
         return publish(prompt, '/ai')
     
-    def __save_to_history(self, text: str) -> None:
-        publish(text=text, topic="/history")
+    def __save_to_history(self, command: str, response: str) -> None:
+        data = {
+            "command": command,
+            "response": response
+        }
+        stringified_response = json.dumps(data)
+        publish(text=stringified_response, topic="/history")
         return
         
     def today(self, _) -> None:
@@ -66,33 +75,33 @@ class Core():
         
     def play_video(self, video_title: str) -> None:
         self._video_player.play_video(video_title)
-        return self.__save_to_history("Reproduzindo {video_titl")
+        return self.__save_to_history(command=self._command, response=f"Reproduzindo {video_title}")
         
     def pause_video(self) -> None:
         self._keyboard_controller.pause_video()
-        return self.__save_to_history("Pausando mídia")
+        return self.__save_to_history(command=self._command, response="Pausando mídia")
     
     def continue_video(self) -> None:
         self._keyboard_controller.continue_video()
-        return self.__save_to_history("Retomando mídia")
+        return self.__save_to_history(command=self._command, response="Retomando mídia")
         
     def next_video(self) -> None:
         self._keyboard_controller.next_video()
-        return self.__save_to_history("Próximo vídeo")
+        return self.__save_to_history(command=self._command, response="Próximo vídeo")
         
     def previous_video(self) -> None:
         self._keyboard_controller.previous_video()
-        return self.__save_to_history("Vídeo anterior")
+        return self.__save_to_history(command=self._command, response="Vídeo anterior")
         
     def volume_up(self) -> None:
         self._keyboard_controller.volume_up()
-        return self.__save_to_history("Aumentando volume")
+        return self.__save_to_history(command=self._command, response="Aumentando volume")
         
     def volume_down(self) -> None:
         self._keyboard_controller.volume_down()
-        return self.__save_to_history("Diminuindo volume")
+        return self.__save_to_history(command=self._command, response="Diminuindo volume")
         
     def mute(self) -> None:
         self._keyboard_controller.mute()
-        return self.__save_to_history("Silenciando volume")
+        return self.__save_to_history(command=self._command, response="Silenciando volume")
         
