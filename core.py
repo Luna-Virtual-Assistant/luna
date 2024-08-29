@@ -37,7 +37,7 @@ class Core():
             self._actions[action](*args)
         else:
             msg = f"Desculpe, não entendi. Tente alguma dessas ações: 'quem', 'hoje', 'toque', 'pause', 'continue', 'próximo', 'anterior', 'aumentar volume', 'diminuir volume', 'silenciar'"
-            self.__save_to_history(msg)
+            self.__save_to_history(command="error", response=msg)
             raise ValueError(msg)
         
     def duplicated_contacts(self, data: dict) -> None:
