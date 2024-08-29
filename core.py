@@ -61,15 +61,17 @@ class Core():
         publish(text=stringified_response, topic="/history")
         return
         
-    def today(self, _) -> None:
+    def today(self) -> None:
         response = self._assistant.today()
-        self.__save_to_history(response)
+        self.__save_to_history(
+            command=self._command, response=response
+        )
         publish(text=response, topic="/tts")
         return;
         
-    def who(self, _) -> None:
+    def who(self) -> None:
         response = self._assistant.who()
-        self.__save_to_history(response)
+        self.__save_to_history(command=self._command, response=response)
         publish(text=response, topic="/tts")
         return;
         
