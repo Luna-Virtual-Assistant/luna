@@ -61,7 +61,7 @@ class Core():
         publish(text=stringified_response, topic="/history")
         return
         
-    def today(self) -> None:
+    def today(self, _=None) -> None:
         response = self._assistant.today()
         self.__save_to_history(
             command=self._command, response=response
@@ -69,7 +69,7 @@ class Core():
         publish(text=response, topic="/tts")
         return;
         
-    def who(self) -> None:
+    def who(self, _=None) -> None:
         response = self._assistant.who()
         self.__save_to_history(command=self._command, response=response)
         publish(text=response, topic="/tts")
