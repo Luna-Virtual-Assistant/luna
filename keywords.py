@@ -1,5 +1,11 @@
 
 keywords = {
+    'send': [
+        'enviar',
+        'envie',
+        'mandar',
+        'mande',
+    ],
     'today': [
         'horas',
         'hoje',

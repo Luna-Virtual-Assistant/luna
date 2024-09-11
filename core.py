@@ -1,9 +1,15 @@
 import json
+import os
+
+from dotenv import load_dotenv
+import requests
 from mqtt_publisher.publisher import publish
 from services.assistant.factory import AssistantFactory
 from services.keyboard.factory import KeyboardFactory
 from services.youtube.factory import VideoPlayerFactory
 
+
+load_dotenv(override=True)
 
 class Core():
     _is_selecting_contact = False
@@ -28,7 +34,8 @@ class Core():
             'who': self.who,
             'today': self.today,
             'help': self.ai_response,
-            'duplicated_contacts': self.duplicated_contacts
+            'duplicated_contacts': self.duplicated_contacts,
+            'send': self.send_whatsapp_message
         }
         
     def run(self, action: str, *args) -> None:
@@ -37,22 +44,47 @@ class Core():
             self._actions[action](*args)
         else:
             msg = f"Desculpe, não entendi. Tente alguma dessas ações: 'quem', 'hoje', 'toque', 'pause', 'continue', 'próximo', 'anterior', 'aumentar volume', 'diminuir volume', 'silenciar'"
-            self.__save_to_history(command="error", response=msg)
+            self.save_to_history(command="error", response=msg)
             raise ValueError(msg)
         
-    def duplicated_contacts(self, data: dict) -> None:
+    def send_whatsapp_message(self, text: str) -> None:
+        parts = text.split(" para ")
+        if len(parts) == 2:
+            message_text = parts[0].replace("envie", "").strip()
+            contact_name = parts[1].strip()
+            
+        data = {
+            "chatName": contact_name,
+            "sessionName": "default",
+            "message": message_text,
+            "chatId": None
+        }
+        
+        print(data)
+        
+        self.send_message_to_contact(data)
+            
+    def send_message_to_contact(self, data: dict) -> None:
+        headers = {'Content-Type': 'application/json'}
+        requests.post(f"http://{os.getenv('WHATSAPP_REST_HOST')}/send-message?token={os.getenv('WHATSAPP_REST_SECRET')}", json=data, headers=headers)
+        publish("stop", "/tts/stop")
+        return;
+        
+    def duplicated_contacts(self, data: str) -> None:
+        data = json.loads(data)
         contacts = data.get('contacts')
-        speak_text = [f"{index + 1} {contact['chat_name']}," for index, contact in enumerate(contacts)]
+        speak_text = "; ".join([f"{index + 1} {contact['chat_name']}" for index, contact in enumerate(contacts)])
         self._is_selecting_contact = True
         self._contacts = contacts
         self._message_to_send = data.get('message')
-        self.__save_to_history(command=self._command, response="Contatos duplicados. Selecione um contato")
+        self.save_to_history(command=self._command, response=f"Contatos duplicados. Selecione um contato: {speak_text}")
+        publish("signal", "/luna/web/duplicated")
         return publish(f"Para qual contato deseja enviar? {speak_text}", '/tts')
       
     def ai_response(self, prompt: str):
         return publish(prompt, '/ai')
     
-    def __save_to_history(self, command: str, response: str) -> None:
+    def save_to_history(self, command: str, response: str) -> None:
         data = {
             "command": command,
             "response": response
@@ -63,7 +95,7 @@ class Core():
         
     def today(self, _=None) -> None:
         response = self._assistant.today()
-        self.__save_to_history(
+        self.save_to_history(
             command=self._command, response=response
         )
         publish(text=response, topic="/tts")
@@ -71,39 +103,39 @@ class Core():
         
     def who(self, _=None) -> None:
         response = self._assistant.who()
-        self.__save_to_history(command=self._command, response=response)
+        self.save_to_history(command=self._command, response=response)
         publish(text=response, topic="/tts")
         return;
         
     def play_video(self, video_title: str) -> None:
         self._video_player.play_video(video_title)
-        return self.__save_to_history(command=self._command, response=f"Reproduzindo {video_title}")
+        return self.save_to_history(command=self._command, response=f"Reproduzindo {video_title}")
         
     def pause_video(self) -> None:
         self._keyboard_controller.pause_video()
-        return self.__save_to_history(command=self._command, response="Pausando mídia")
+        return self.save_to_history(command=self._command, response="Pausando mídia")
     
     def continue_video(self) -> None:
         self._keyboard_controller.continue_video()
-        return self.__save_to_history(command=self._command, response="Retomando mídia")
+        return self.save_to_history(command=self._command, response="Retomando mídia")
         
     def next_video(self) -> None:
         self._keyboard_controller.next_video()
-        return self.__save_to_history(command=self._command, response="Próximo vídeo")
+        return self.save_to_history(command=self._command, response="Próximo vídeo")
         
     def previous_video(self) -> None:
         self._keyboard_controller.previous_video()
-        return self.__save_to_history(command=self._command, response="Vídeo anterior")
+        return self.save_to_history(command=self._command, response="Vídeo anterior")
         
     def volume_up(self) -> None:
         self._keyboard_controller.volume_up()
-        return self.__save_to_history(command=self._command, response="Aumentando volume")
+        return self.save_to_history(command=self._command, response="Aumentando volume")
         
     def volume_down(self) -> None:
         self._keyboard_controller.volume_down()
-        return self.__save_to_history(command=self._command, response="Diminuindo volume")
+        return self.save_to_history(command=self._command, response="Diminuindo volume")
         
     def mute(self) -> None:
         self._keyboard_controller.mute()
-        return self.__save_to_history(command=self._command, response="Silenciando volume")
+        return self.save_to_history(command=self._command, response="Silenciando volume")
         
